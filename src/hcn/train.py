@@ -32,9 +32,7 @@ class Trainer():
                        action_size=action_size,
                        nb_hidden=nb_hidden)
 
-
     def train(self):
-
         print('\n:: training started\n')
         epochs = 20
         for j in range(epochs):
@@ -80,7 +78,7 @@ class Trainer():
             # forward propagation
             #  train step
             loss += self.net.train_step(features, r, action_mask)
-        return loss/len(dialog)
+        return loss / len(dialog)
 
     def evaluate(self):
         # create entity tracker
@@ -123,7 +121,7 @@ class Trainer():
             # get dialog accuracy
             dialog_accuracy += correct_examples/len(dialog)
 
-        return dialog_accuracy/num_dev_examples
+        return dialog_accuracy / num_dev_examples
 
 
 

@@ -11,27 +11,25 @@ import sys
 
 
 class InteractiveSession():
-
     def __init__(self):
-
+        
         et = EntityTracker()
         self.bow_enc = BoW_encoder()
         self.emb = UtteranceEmbed()
         at = ActionTracker(et)
-
+        
         obs_size = self.emb.dim + self.bow_enc.vocab_size + et.num_features
         self.action_templates = at.get_action_templates()
         action_size = at.action_size
         nb_hidden = 128
-
+        
         self.net = LSTM_net(obs_size=obs_size,
-                       action_size=action_size,
-                       nb_hidden=nb_hidden)
-
+                            action_size=action_size,
+                            nb_hidden=nb_hidden)
+        
         # restore checkpoint
         self.net.restore()
-
-
+    
     def interact(self):
         # create entity tracker
         et = EntityTracker()
@@ -39,46 +37,89 @@ class InteractiveSession():
         at = ActionTracker(et)
         # reset network
         self.net.reset_state()
-
+        
         # begin interaction loop
         while True:
-
+            
             # get input from user
             u = input(':: ')
-
+            
             # check if user wants to begin new session
             if u == 'clear' or u == 'reset' or u == 'restart':
                 self.net.reset_state()
                 et = EntityTracker()
                 at = ActionTracker(et)
                 print('')
-
+            
             # check for exit command
             elif u == 'exit' or u == 'stop' or u == 'quit' or u == 'q':
                 break
-
+            
             else:
                 # ENTER press : silence
                 if not u:
                     u = '<SILENCE>'
-
+                
                 # encode
-                u_ent = et.extract_entities(u)
+                u_ent, u_entities = et.extract_entities(u, is_test=True)
+                
+                print(u_entities)
+                
                 u_ent_features = et.context_features()
+                #                 print('u_ent_features : ',u_ent_features)
+                
+                # using u_ent_features 후처리
+                
                 u_emb = self.emb.encode(u)
                 u_bow = self.bow_enc.encode(u)
                 # concat features
                 features = np.concatenate((u_ent_features, u_emb, u_bow), axis=0)
                 # get action mask
                 action_mask = at.action_mask()
-
+                
                 # forward
                 prediction = self.net.forward(features, action_mask)
-                print('>>', self.action_templates[prediction])
-
-
-if __name__ == '__main__':
-    # create interactive session
-    isess = InteractiveSession()
-    # begin interaction
-    isess.interact()
+                
+                #                 print(prediction)
+                
+                if self.post_process(prediction, u_ent_features):
+                    print('>>', 'api_call ' + u_entities['<cuisine>'] + ' ' + u_entities['<location>']
+                          + ' ' + u_entities['<party_size>'] + ' ' + u_entities['<rest_type>'])
+                else:
+                    prediction = self.action_post_process(prediction, u_entities)
+                    print('>>', self.action_templates[prediction])
+    
+    def post_process(self, prediction, u_ent_features):
+        if prediction == 1:
+            return True
+        attr_list = [0, 13, 6, 14]
+        if all(u_ent_featur == 1 for u_ent_featur in u_ent_features) and prediction in attr_list:
+            return True
+        else:
+            return False
+    
+    def action_post_process(self, prediction, u_entities):
+        
+        # attr_list 가 그때그때 바뀜.
+        attr_mapping_dict = {
+            0: '<cuisine>',
+            13: '<location>',
+            6: '<party_size>',
+            14: '<rest_type>'
+        }
+        
+        # find exist and non-exist entity
+        exist_ent_index = [key for key, value in u_entities.items() if value != None]
+        non_exist_ent_index = [key for key, value in u_entities.items() if value == None]
+        
+        #         print('exist_ent_index', exist_ent_index)
+        
+        if prediction in attr_mapping_dict:
+            pred_key = attr_mapping_dict[prediction]
+            if pred_key in exist_ent_index:
+                print('pred_key exist in attr : ', attr_mapping_dict[prediction])
+                for key, value in attr_mapping_dict.items():
+                    if value == non_exist_ent_index[0]:
+                        return key
+        else:
+            return prediction

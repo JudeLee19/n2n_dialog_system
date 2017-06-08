@@ -25,6 +25,12 @@ import numpy as np
     [2] : location
     [3] : party_size
     [4] : rest_type
+    
+    in template
+    1 : cuisine
+    7 : people
+    14 : location
+    15 : price range
 
 '''
 class ActionTracker():

@@ -35,17 +35,20 @@ class EntityTracker():
         else:
             return ent
 
-
-    def extract_entities(self, utterance, update=True):
+    def extract_entities(self, utterance, update=True, is_test=False):
         tokenized = []
         for word in utterance.split(' '):
             entity = self.ent_type(word)
             if word != entity and update:
                 self.entities[entity] = word
-
             tokenized.append(entity)
 
-        return ' '.join(tokenized)
+        tokenized_str = ' '.join(tokenized)
+        
+        if is_test is True:
+            return tokenized_str, self.entities
+        else:
+            return tokenized_str
 
 
     def context_features(self):

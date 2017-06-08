@@ -267,5 +267,5 @@ def main(args):
 
 # _______MAIN_______
 if __name__ == '__main__':
-    main(sys.argv[1:])
-    #main(['--infer', '--task_id=1'])
+    # main(sys.argv[1:])
+    main(['--infer', '--task_id=2'])
