@@ -62,10 +62,7 @@ class InteractiveSession():
                 
                 # encode
                 u_ent, u_entities = et.extract_entities(u, is_test=True)
-                                
                 u_ent_features = et.context_features()
-                
-                # using u_ent_features 후처리
                 
                 u_emb = self.emb.encode(u)
                 u_bow = self.bow_enc.encode(u)
@@ -76,7 +73,7 @@ class InteractiveSession():
                 
                 # forward
                 prediction = self.net.forward(features, action_mask)
-                                
+                
                 if self.post_process(prediction, u_ent_features):
                     print('>>', 'api_call ' + u_entities['<cuisine>'] + ' ' + u_entities['<location>']
                           + ' ' + u_entities['<party_size>'] + ' ' + u_entities['<rest_type>'])
@@ -94,8 +91,6 @@ class InteractiveSession():
             return False
     
     def action_post_process(self, prediction, u_entities):
-        
-        # attr_list 가 그때그때 바뀜.
         attr_mapping_dict = {
             0: '<cuisine>',
             13: '<location>',
@@ -106,17 +101,19 @@ class InteractiveSession():
         # find exist and non-exist entity
         exist_ent_index = [key for key, value in u_entities.items() if value != None]
         non_exist_ent_index = [key for key, value in u_entities.items() if value == None]
-                
+        
         if prediction in attr_mapping_dict:
             pred_key = attr_mapping_dict[prediction]
             if pred_key in exist_ent_index:
-                print('pred_key exist in attr : ', attr_mapping_dict[prediction])
                 for key, value in attr_mapping_dict.items():
                     if value == non_exist_ent_index[0]:
                         return key
+            else:
+                return prediction
         else:
             return prediction
-        
+
+
 if __name__ == '__main__':
     # create interactive session
     isess = InteractiveSession()
