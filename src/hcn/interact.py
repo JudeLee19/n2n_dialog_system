@@ -62,11 +62,8 @@ class InteractiveSession():
                 
                 # encode
                 u_ent, u_entities = et.extract_entities(u, is_test=True)
-                
-                print(u_entities)
-                
+                                
                 u_ent_features = et.context_features()
-                #                 print('u_ent_features : ',u_ent_features)
                 
                 # using u_ent_features 후처리
                 
@@ -79,9 +76,7 @@ class InteractiveSession():
                 
                 # forward
                 prediction = self.net.forward(features, action_mask)
-                
-                #                 print(prediction)
-                
+                                
                 if self.post_process(prediction, u_ent_features):
                     print('>>', 'api_call ' + u_entities['<cuisine>'] + ' ' + u_entities['<location>']
                           + ' ' + u_entities['<party_size>'] + ' ' + u_entities['<rest_type>'])
@@ -111,9 +106,7 @@ class InteractiveSession():
         # find exist and non-exist entity
         exist_ent_index = [key for key, value in u_entities.items() if value != None]
         non_exist_ent_index = [key for key, value in u_entities.items() if value == None]
-        
-        #         print('exist_ent_index', exist_ent_index)
-        
+                
         if prediction in attr_mapping_dict:
             pred_key = attr_mapping_dict[prediction]
             if pred_key in exist_ent_index:
@@ -123,3 +116,9 @@ class InteractiveSession():
                         return key
         else:
             return prediction
+        
+if __name__ == '__main__':
+    # create interactive session
+    isess = InteractiveSession()
+    # begin interaction
+    isess.interact()
